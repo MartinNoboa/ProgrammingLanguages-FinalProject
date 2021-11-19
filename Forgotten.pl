@@ -15,13 +15,11 @@ start:-
   write('The one thing you remember is that you had a recorder, and it is very special to you...'), nl,
   write('It must be around here somewhere...'), nl,
   helpme,
-  info,
   repeat,
   write('>> '),
   read(X),
   puzzle(X),
   do(X), nl,
-  
   end_condition(X).
 
 end_condition(end).
@@ -44,10 +42,10 @@ do(_) :-
 helpme:-
   write('Use Prolog commands to play the game.'),nl,
   write('The commands you can use are:'),nl,
-  nl,
-  write('   go('location'). (ex. go to the office)'),nl,
-  write('   info. (ex. look)'),nl,
-  write('   take('item') [item] (ex. take apple)'),nl,
+  write('go([location]). (ex. go to the office)'),nl,
+  write('info. (ex. look)'),nl,
+  write('take([item]) (ex. take apple)'),nl,
+  write('Hit enter to continue'),nl,
   get0(_),
   info.
 
