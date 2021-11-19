@@ -1,4 +1,0 @@
-Chatbot with Prolog
-Text based game with prolog 
-
-Implement both with html?
