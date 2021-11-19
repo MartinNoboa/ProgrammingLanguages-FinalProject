@@ -8,12 +8,49 @@
 use_module(library(persistency)).
 
 %%%%% Rules for game control --------------------------------------------
-loop:-  
+start:-  
+  write('Welcome to Forgotten'), nl,
+  write('You wake up in a strange forest, but you do not remember how you got here...'), nl,
+  write('In fact you can not even remeber your name...'), nl,
+  write('The one thing you remember is that you had a recorder, and it is very special to you...'), nl,
+  write('It must be around here somewhere...'), nl,
+  helpme,
+  info,
   repeat,
-  write('Enter command (end to exit): '),
+  write('>> '),
   read(X),
-  write(X), nl,
-  X = end.
+  puzzle(X),
+  do(X), nl,
+  
+  end_condition(X).
+
+end_condition(end).
+end_condition(_) :-
+  have(recorder,true),
+  write('Congratulations, you have completed the game!').
+
+do(go(X)):-go(X),!.
+do(go(X)):-go(X),!.
+do(take(X)):-take(X),!.
+do(helpme):-helpme,!.
+%do(inventory):-inventory,!.
+do(info):-info,!.
+do(end):-
+	halt(0).
+do(_) :-
+  write('Invalid command').
+
+
+helpme:-
+  write('Use Prolog commands to play the game.'),nl,
+  write('The commands you can use are:'),nl,
+  nl,
+  write('   go('location'). (ex. go to the office)'),nl,
+  write('   info. (ex. look)'),nl,
+  write('   take('item') [item] (ex. take apple)'),nl,
+  get0(_),
+  info.
+
 
 %%%%% KB and basic rules --------------------------------------------
 % Describe locations
@@ -25,10 +62,11 @@ location('deep cave').
 location(swamp).
 location(stable).
 location(castle).
+location('castle hall').
 location(staircase).
 location(basement).
 location('wine cellar').
-location('second floor hall').
+location('second floor').
 location(hallway).
 location(library).
 location('living room').
@@ -45,8 +83,8 @@ connection(stable,castle).
 connection(castle, 'castle hall').
 connection('castle hall',staircase).
 connection(staircase, basement).
-connection(staircase,'second floor hall').
-connection('second floor hall', hallway).
+connection(staircase,'second floor').
+connection('second floor', hallway).
 connection(basement,'wine cellar').
 connection(hallway,library).
 connection(hallway,'living room').
@@ -71,66 +109,35 @@ list_connections(_).
 
 % Describe items in each location
 % We must declare the predicate as dynamic if the object is "takable"
-% deep forest
-%:-dynamic item/1.
+% deep forest	
 item(branch,'deep forest').
 % stable
-item(locker,stable).
-item('torch',locker).
-% castle
-item(lamp, castle).
+item('torch',stable).
 % deep cave
 item(bell,'deep cave').
-% castle hall
-item('shelve','castle hall').
-item('oil lamp','shelve').
 % basement
-item('key rack',basement).
-item(key,'key rack').
+item(key,basement).
 % wine cellar
-item(storage,'wine cellar').
-item(wine,storage).
+item(wine,'wine cellar').
 % library
 item(book,library).
-% living room
-item(table,'living room').
-item('old man','living room').
-item(recorder,'old man').
 
-% initial state of items
-closed('deep cave').
-closed(library).
-closed(basement).
-closed(castle).
-unarmed('oil-soaked cloth',branch).
-unarmed(branch,'oil-soaked cloth').
-off('oil lamp').
-% Initial state of item ownership
 
-% initial location
-:-dynamic here/1.
+% initial location and state of items
+:-dynamic (here/1,haveBranch/1,item/2,have/2).
 here(forest).
-:- discontiguous have/2.
-:-dynamic haveRecorder/2.
-haveRecorder(recorder,false).
-:-dynamic haveTorch/3.
-haveTorch(torch,false).
-:-dynamic haveBell/4.
-haveBell(bell,false).
-:-dynamic haveKey/5.
-haveKey(key,false).
-:-dynamic haveWine/6.
-haveWine(wine,false).
-:-dynamic haveBook/7.
-haveBook(book,false).
-:-dynamic haveLamp/8.
-haveLamp('oil lamp',false).
 
+have(recorder,false).
+have(branch,false).
+have(bell,false).
+have(torch,false).
+have(key,false).
+have(wine,false).
+have(book,false).
 
 
 
 %% Rules to get items from location
-
 list_items(Location) :-
 	item(X, Location),
 	write(X),
@@ -157,25 +164,22 @@ go(Location):-
 	info.
 % Verify there is a connection to new location
 canGo(Location):- 
-    here(X),
-    (
-    	connect(X, Location) -> write('You moved from '),
-        write(X),
-        write('.'),
-        nl;
-    	write('You can not get there from here.'),
-        nl,
-        false
-    ).
+    here(X),                   
+  	connect(X,Location),!.
+
 % Retract dynamic predicate and assert it with new value
 move(Location):-
     retract(here(_)),
     asserta(here(Location)).
 
+
 % Take item into invertory
+
+
+
 take(X):-  
-	canTake(X).
-	%takeItem(X).
+	canTake(X),
+	takeItem(X).
 canTake(Item) :-
   	here(Location),
     (item(Item, Location) ->  
@@ -187,76 +191,63 @@ canTake(Item) :-
   	write(' in here.'),
   	nl, fail
     ).
-%review function
+
+%%% review function
 takeItem(X):-  
   	retract(item(X,_)),
     retract(have(X,_)),
   	asserta(have(X,true)).
 
 %%%%% Rules for locked locations
-puzzle(_).
+
 % road -> must get the recorder before leaving
 puzzle(go(road)):-
-    (
-    	haveRecorder(recorder,true) ->  
-  		!;
-    	write('I can not leave, I need the recorder...'),
-  		!, fail
-    ).
+    have(recorder,true),
+    !.
+puzzle(go(road)):-
+	write('I can not leave, I need my recorder...'),nl,
+	!, fail.
   	
 % deep cave -> must get the torch before entering
 puzzle(go('deep cave')):-
-    (
-    	haveTorch(bell,true) ->  
-  		!;
-    	 write('I can not enter, its too dark...'),
-  		!, fail
-    ).
+    have(torch,true),
+    write('You lit up the torch and walk into the deep cave...'),nl,
+  	!.
+puzzle(go('deep cave')):-
+	write('I can not enter, its too dark...'),nl,
+	!, fail.
+
 % castle hall -> must get the bell before leaving
 puzzle(go('castle hall')):-
-    (
-    	haveBell(bell,true) ->  
-  		!;
-    	 write('Seems like I need to ring to be let it...'),
-  		!, fail
-    ).
-% basement -> must get the oil lamp before going down
+    have(bell,true),
+    write('You rang the bell and the castle door opened...'),nl,
+  	!.
+puzzle(go('castle hall')):-
+	write('Seems like I need to ring to be let it...'),nl,
+	!, fail.
 
 % library -> must get the key to enter
 puzzle(go(library)):-
-    (
-    	haveKey(key,true) ->  
-  		!;
-    	 write('Its locked, I need to find the key...'),
-  		!, fail
-    ).
+    have(key,true),
+    write('You unlocked the door and walked in...'),nl,
+  	!.
+puzzle(go(library)):-
+	write('The door is locked...'),nl,
+	!, fail.
+
 % living room -> must get the recorder before leaving // review funtion
 puzzle(go('living room')):-
-    (
-    	haveWine(wine,true)->
-  		!;
-    	write('I need the book and the wine...'),
-  		!, fail
-    ).
-
-
-
-
-
-%%%%% Rules for list manipulation
-% Substitute
-substitute(_,_,[],[]).
-substitute(Prev, New, [Prev|T], [New|R]):-
-    substitute(Prev, New, T,R).
-substitute(Prev, New, [H|T],[H|R]):-
-    substitute(Prev,New,T,R).
-
-
-
-
-
-
-
+    have(book,true),
+    have(wine,true),
+    write('The old man took the wine jug and the book.'),nl,
+    write('He dropped your recorder and you picked it up.'),nl,
+  	!.
+puzzle(go('living room')):-
+	write('There is an old man in the room.'),nl,
+	write('AHHHH do not disturb me!.'),nl,
+	write('I need my wine and my book! - he yelled'),nl,
+	!, fail.
+puzzle(_).
 
 
 

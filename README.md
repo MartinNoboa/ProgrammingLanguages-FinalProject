@@ -8,12 +8,16 @@ Download the latest stable version of [SWI Prolog](https://www.swi-prolog.org/do
 Clone this repository or dowload the **Forgotten.pl** file.
 
 ## Usage
-Open your CMD terminal and run the following command.
+Open your CMD terminal and run the following command in the same directory with the **Forgotten.pl** file.
 
 ```bash
 swipl --quiet Forgotten.pl
 ```
 
+Once the program begins, run the following command.
+```bash
+start.
+```
 
 ## Contributing
 Please follow the license rules for modifications and usage. If you wish to contribute, contact the repository owner.
